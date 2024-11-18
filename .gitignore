@@ -1,0 +1,6 @@
+.DS_Store
+transmisor/firmware/TX/.DS_Store
+transmisor/firmware/TX/.pio
+transmisor/firmware/TX/.vscode
+receptor/firmware/RX/.pio
+receptor/firmware/RX/.vscode
