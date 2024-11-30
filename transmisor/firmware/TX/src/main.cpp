@@ -9,16 +9,20 @@
 #include "wifi.hpp"
 #include "server.hpp"
 #include "now.hpp"
-#include "dto.hpp"
-
+// #include "dto.hpp"
 
 // THIS MAC = e4:65:b8:4a:11:55
 // other mac = e4:65:b8:4a:0b:f0 sta f1 ap
 uint8_t rx_address[6] = {0xE4, 0x65, 0xB8, 0x4A, 0x0B, 0xF0};
+const int QUEUE_SIZE = 5;
 EventGroupHandle_t s_wifi_event_group;
+// const esp_event_base_t EVENT_TYPE = "light";
+esp_event_loop_handle_t loop_handle;
+Server server;
 
+ESP_EVENT_DEFINE_BASE(LIGHT_EVENT);
 
-// void wifiEventHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) 
+// void wifiEventHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 // {
 //   if (event_base == WIFI_EVENT) {
 //         switch (event_id) {
@@ -33,6 +37,22 @@ EventGroupHandle_t s_wifi_event_group;
 //         }
 //     }
 // }
+void run_on_event(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data)
+{
+  ESP_LOGI("EVENT_HANDLE", "event recieved");
+  DTO* dto = (DTO*)event_data;
+  // bool data = (bool)event_data;
+  if(dto->breaks){
+  // if (data){
+    gpio_set_level(GPIO_NUM_2, 1);
+  }
+  else
+  {
+    gpio_set_level(GPIO_NUM_2, 0);
+  }
+  // ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
+}
+
 static void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
   if (mac_addr == NULL)
@@ -46,26 +66,24 @@ static void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
   }
 }
 
-void toggleLED(void *parameters)
-{
-  DTO *dto = new DTO();
-  dto->breaks = false;
-  // uint8_t *data = {};
-  while (1)
-  {
-    gpio_set_level(GPIO_NUM_2, 1);
-    dto->breaks = true;
-    // xthal_memcpy(data, dto, sizeof(DTO));
-    ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    gpio_set_level(GPIO_NUM_2, 0);
-    dto->breaks = false;
-    ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-  }
-}
-
-
+// void toggleLED(void *parameters)
+// {
+//   DTO *dto = new DTO();
+//   dto->breaks = false;
+//   // uint8_t *data = {};
+//   while (1)
+//   {
+//     gpio_set_level(GPIO_NUM_2, 1);
+//     dto->breaks = true;
+//     // xthal_memcpy(data, dto, sizeof(DTO));
+//     ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
+//     vTaskDelay(1000 / portTICK_PERIOD_MS);
+//     gpio_set_level(GPIO_NUM_2, 0);
+//     dto->breaks = false;
+//     ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
+//     vTaskDelay(500 / portTICK_PERIOD_MS);
+//   }
+// }
 
 extern "C" void app_main(void)
 {
@@ -79,7 +97,6 @@ extern "C" void app_main(void)
   }
   ESP_ERROR_CHECK(ret);
 
-
   config_wifi();
 
   ESP_LOGI("app_main", "Config wifi end");
@@ -88,6 +105,17 @@ extern "C" void app_main(void)
 
   ESP_LOGI("app_main", "Config esp-now end");
 
-  setup_server();
-  xTaskCreate(toggleLED, "toggle LED", 1024, NULL, 1, NULL);
+  esp_event_loop_args_t loop_args = {
+      .queue_size = 5,
+      .task_name = "loop_task", // task will be created
+      .task_priority = uxTaskPriorityGet(NULL),
+      .task_stack_size = 3072,
+      .task_core_id = tskNO_AFFINITY};
+
+
+  ESP_ERROR_CHECK(esp_event_loop_create(&loop_args, &loop_handle));
+
+  ESP_ERROR_CHECK(esp_event_handler_register_with(loop_handle, ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, run_on_event, NULL));
+  server.setup_server(rx_address, &loop_handle);
+
 }
