@@ -22,9 +22,6 @@ esp_err_t Server::toggleBreak(httpd_req_t *req)
 {
     Server *ctx = (Server*)req->user_ctx;
     DTO *dto = new DTO();
-    dto->left = false;
-    dto->right = false;
-    dto->reverse = false;
     if (ctx->status == 1)
     {
         dto->breaks = false;
@@ -37,8 +34,7 @@ esp_err_t Server::toggleBreak(httpd_req_t *req)
     }
     ESP_LOGI("HTTP_SERVER", "sending...");
     ESP_ERROR_CHECK(esp_event_post_to(*(ctx->appEvent), LIGHT_EVENT, 0, dto, sizeof(DTO), 50));
-    // bool v = ctx->status == 1;
-    // ESP_ERROR_CHECK(esp_event_post_to(*(ctx->appEvent), LIGHT_EVENT, EVENT_ID_1, &v, sizeof(v), portMAX_DELAY));
+
     return httpd_resp_send(req, nullptr, 0);
 }
 
