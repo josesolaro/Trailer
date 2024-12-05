@@ -17,41 +17,23 @@
 uint8_t rx_address[6] = {0xE4, 0x65, 0xB8, 0x4A, 0x0B, 0xF0};
 const int QUEUE_SIZE = 5;
 EventGroupHandle_t s_wifi_event_group;
-// const esp_event_base_t EVENT_TYPE = "light";
 esp_event_loop_handle_t loop_handle;
 Server server;
 
 ESP_EVENT_DEFINE_BASE(LIGHT_EVENT);
 
-// void wifiEventHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
-// {
-//   if (event_base == WIFI_EVENT) {
-//         switch (event_id) {
-//             case WIFI_EVENT_AP_STACONNECTED:
-//                 ESP_LOGI("WIFI_HANDLER", "WIFI_EVENT_AP_START");
-//                 // esp_wifi_connect();
-//                 break;
-//             case WIFI_EVENT_AP_STADISCONNECTED:
-//                 ESP_LOGI("WIFI_HANDLER", "WIFI_EVENT_AP_DISCONNECTED");
-//                 // esp_wifi_disconnect();
-//                 break;
-//         }
-//     }
-// }
 void run_on_event(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data)
 {
   ESP_LOGI("EVENT_HANDLE", "event recieved");
   DTO* dto = (DTO*)event_data;
-  // bool data = (bool)event_data;
   if(dto->breaks){
-  // if (data){
     gpio_set_level(GPIO_NUM_2, 1);
   }
   else
   {
     gpio_set_level(GPIO_NUM_2, 0);
   }
-  // ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
+  ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
 }
 
 static void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
