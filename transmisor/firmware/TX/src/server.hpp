@@ -16,10 +16,14 @@ class Server{
         esp_err_t send_web_page(httpd_req_t *req);
         static esp_err_t get_req_handler(httpd_req_t *req);
         static esp_err_t toggleBreak(httpd_req_t *req);
+        static esp_err_t left(httpd_req_t *req);
+        static esp_err_t right(httpd_req_t *req);
+        static esp_err_t reverse(httpd_req_t *req);
+        static esp_err_t sendEvent(DTO *dto, Server *ctx);
 
     private:
         const char* html_content = "<!DOCTYPE html> <html>  <head> <style type='text.css'> .content{     display: flex;     flex-direction: row; } </style> <script type='application/javascript'> function toggleBreak(){     console.log('about to call');     var xhttp = new XMLHttpRequest();     xhttp.open('GET', 'http://192.168.4.1/togglebreak');     xhttp.send(); } </script> </head>  <body>     <div class='content'>         <h1>HELLO WOLRD BYE WORLD</h1>         <button type='button' onclick='toggleBreak()'>Toggle</button>     </div> </body>  </html>";
         uint8_t esp_now[6];
-        int status = 0;
+        DTO dto;
         esp_event_loop_handle_t *appEvent;
 };

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style type='text.css'>
+.content{
+    display: flex;
+    flex-direction: row;
+}
+</style>
+<script type='application/javascript'>
+function toggleBreak(){
+    apiCall("break");
+}
+function toggleLeft(){
+    apiCall("left");
+}
+function toggleRight(){
+    apiCall("right");
+}
+function toggleReverse(){
+    apiCall("reverse");
+}
+
+function apiCall(endpoint){
+    var xhttp = new XMLHttpRequest();
+    xhttp.open('GET', 'http://192.168.4.1/'+endpoint);
+    xhttp.send();
+}
+</script>
+</head>
+
+<body>
+    <div class='content'>
+        <h1>HELLO WOLRD BYE WORLD</h1>
+        <button type='button' onclick='toggleBreak()'>BREAK</button>
+        <button type='button' onclick='toggleLeft()'>LEFT</button>
+        <button type='button' onclick='toggleRight()'>RIGHT</button>
+        <button type='button' onclick='toggleReverse()'>REVERSE</button>
+    </div>
+</body>
+
+</html>

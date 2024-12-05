@@ -9,6 +9,7 @@
 #include "wifi.hpp"
 #include "server.hpp"
 #include "now.hpp"
+#include "esp_spiffs.h"
 // #include "dto.hpp"
 
 // THIS MAC = e4:65:b8:4a:11:55
@@ -96,6 +97,15 @@ extern "C" void app_main(void)
     ret = nvs_flash_init();
   }
   ESP_ERROR_CHECK(ret);
+
+  esp_vfs_spiffs_conf_t config = {
+    .base_path = "/storage",
+    .partition_label = NULL,
+    .max_files = 5,
+    .format_if_mount_failed = false
+  };
+
+  ESP_ERROR_CHECK(esp_vfs_spiffs_register(&config));
 
   config_wifi();
 
