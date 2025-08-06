@@ -36,7 +36,7 @@ void run_on_event(void *handler_arg, esp_event_base_t base, int32_t id, void *ev
   ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
 }
 
-static void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
+static void send_cb(const esp_now_send_info_t *mac_addr, esp_now_send_status_t status)
 {
   if (mac_addr == NULL)
   {
@@ -84,7 +84,7 @@ extern "C" void app_main(void)
     .base_path = "/storage",
     .partition_label = NULL,
     .max_files = 5,
-    .format_if_mount_failed = false
+    .format_if_mount_failed = true
   };
 
   ESP_ERROR_CHECK(esp_vfs_spiffs_register(&config));
