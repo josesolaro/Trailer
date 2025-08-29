@@ -12,9 +12,16 @@
 #include "esp_spiffs.h"
 // #include "dto.hpp"
 
+#define LEFT_TURN_OUTPUT GPIO_NUM_22
+#define RIGHT_TURN_OUTPUT GPIO_NUM_21
+#define BREAK_OUTPUT GPIO_NUM_17
+#define REVERSE_OUTPUT GPIO_NUM_16
+
+
 // THIS MAC = e4:65:b8:4a:11:55
 // other mac = e4:65:b8:4a:0b:f0 sta f1 ap
-uint8_t rx_address[6] = {0xE4, 0x65, 0xB8, 0x4A, 0x0B, 0xF0};
+
+uint8_t rx_address[6] = {0xE4, 0x65, 0xB8, 0x4A, 0x11, 0x54};
 const int QUEUE_SIZE = 5;
 EventGroupHandle_t s_wifi_event_group;
 esp_event_loop_handle_t loop_handle;
@@ -22,17 +29,50 @@ Server server;
 
 ESP_EVENT_DEFINE_BASE(LIGHT_EVENT);
 
+void set_output(DTO *dto)
+{
+  if (dto->left)
+  {
+    gpio_set_level(LEFT_TURN_OUTPUT, 1);
+  }
+  else
+  {
+    gpio_set_level(LEFT_TURN_OUTPUT, 0);
+  }
+
+  if (dto->right)
+  {
+    gpio_set_level(RIGHT_TURN_OUTPUT, 1);
+  }
+  else
+  {
+    gpio_set_level(RIGHT_TURN_OUTPUT, 0);
+  }
+
+  if (dto->breaks)
+  {
+    gpio_set_level(BREAK_OUTPUT, 1);
+  }
+  else
+  {
+    gpio_set_level(BREAK_OUTPUT, 0);
+  }
+
+  if (dto->reverse)
+  {
+    gpio_set_level(REVERSE_OUTPUT, 1);
+  }
+  else
+  {
+    gpio_set_level(REVERSE_OUTPUT, 0);
+  }
+}
+
 void run_on_event(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data)
 {
   ESP_LOGI("EVENT_HANDLE", "event recieved");
   DTO* dto = (DTO*)event_data;
-  if(dto->breaks){
-    gpio_set_level(GPIO_NUM_2, 1);
-  }
-  else
-  {
-    gpio_set_level(GPIO_NUM_2, 0);
-  }
+  set_output(dto);
   ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
 }
 
@@ -49,28 +89,13 @@ static void send_cb(const esp_now_send_info_t *mac_addr, esp_now_send_status_t s
   }
 }
 
-// void toggleLED(void *parameters)
-// {
-//   DTO *dto = new DTO();
-//   dto->breaks = false;
-//   // uint8_t *data = {};
-//   while (1)
-//   {
-//     gpio_set_level(GPIO_NUM_2, 1);
-//     dto->breaks = true;
-//     // xthal_memcpy(data, dto, sizeof(DTO));
-//     ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
-//     vTaskDelay(1000 / portTICK_PERIOD_MS);
-//     gpio_set_level(GPIO_NUM_2, 0);
-//     dto->breaks = false;
-//     ESP_ERROR_CHECK(esp_now_send(rx_address, (uint8_t*)dto, sizeof(DTO)));
-//     vTaskDelay(500 / portTICK_PERIOD_MS);
-//   }
-// }
-
 extern "C" void app_main(void)
 {
   gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
+  gpio_set_direction(LEFT_TURN_OUTPUT, GPIO_MODE_OUTPUT);
+  gpio_set_direction(RIGHT_TURN_OUTPUT, GPIO_MODE_OUTPUT);
+  gpio_set_direction(BREAK_OUTPUT, GPIO_MODE_OUTPUT);
+  gpio_set_direction(REVERSE_OUTPUT, GPIO_MODE_OUTPUT);
 
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES)
@@ -109,5 +134,4 @@ extern "C" void app_main(void)
 
   ESP_ERROR_CHECK(esp_event_handler_register_with(loop_handle, ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, run_on_event, NULL));
   server.setup_server(rx_address, &loop_handle);
-
 }
